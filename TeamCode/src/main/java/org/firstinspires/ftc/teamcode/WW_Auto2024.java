@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.SECONDS;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -9,7 +11,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name="WW_Auto2024",group="WiredWoodmen")
 public class WW_Auto2024 extends LinearOpMode {
-    public enum START_POSITION {
+
+    public enum START_POSITION{
         BLUE_LEFT,
         BLUE_RIGHT,
         RED_LEFT,

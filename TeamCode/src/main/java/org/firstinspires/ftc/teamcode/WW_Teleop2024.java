@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -34,9 +35,11 @@ public class WW_Teleop2024 extends OpMode{
             rearLeftDrive= null,
             rearRightDrive = null,
             frontLeftDrive= null,
-            frontRightDrive = null;
-    // pixelArm = null;
+            frontRightDrive = null,
+            viperslide=null;
 
+    // pixelArm = null;
+    double hangerpos=0.0;
     HardwareMap hwMap =  null;
     ElapsedTime runTime = new ElapsedTime();
 
@@ -50,31 +53,34 @@ public class WW_Teleop2024 extends OpMode{
         rearRightDrive = hardwareMap.get(DcMotorEx.class, "rear_right_drive");
         frontLeftDrive = hardwareMap.get(DcMotorEx.class, "front_left_drive");
         frontRightDrive = hardwareMap.get(DcMotorEx.class, "front_right_drive");
+        viperslide=hardwareMap.get(DcMotorEx.class,"viperslide");
 
 //Direction?
         frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
         frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
         rearLeftDrive.setDirection(DcMotor.Direction.FORWARD);
         rearRightDrive.setDirection(DcMotor.Direction.FORWARD);
+        viperslide.setDirection(DcMotorSimple.Direction.REVERSE);
         // pixelArm.setDirection(DcMotor.Direction.REVERSE);
 
         frontLeftDrive.setPower(0);
         frontRightDrive.setPower(0);
         rearLeftDrive.setPower(0);
         rearRightDrive.setPower(0);
+        viperslide.setPower(0);
 
         frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rearLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rearRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
+        viperslide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         //Setting motors to run without encoders
         frontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         frontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rearLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rearRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
+        viperslide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         //this will send a telemetry message to signify robot waiting;
         telemetry.addLine("AUTOBOTS ROLL OUT");
@@ -124,6 +130,13 @@ public class WW_Teleop2024 extends OpMode{
         if (gamepad1.dpad_left) speedVariable -= 0.05;
         if (gamepad1.dpad_right) speedVariable += 0.05;
         speedVariable= Range.clip(speedVariable,0,1);
+        if(gamepad1.right_trigger > 0.5 && hangerpos < 2000)
+            hangerpos +=50;
+        if(gamepad1.left_trigger>0.5 && hangerpos > 40)
+            hangerpos -= 40;
+        viperslide.setTargetPosition((int)hangerpos);
+        viperslide.setPower(0.7);
+        viperslide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         //==========================================================
         //                        GamePad Two
