@@ -82,6 +82,7 @@ public class WW_Teleop2024 extends OpMode{
         rearRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         viperslide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+
         //this will send a telemetry message to signify robot waiting;
         telemetry.addLine("AUTOBOTS ROLL OUT");
         telemetry.update();
