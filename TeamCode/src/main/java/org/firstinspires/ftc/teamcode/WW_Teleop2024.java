@@ -24,6 +24,7 @@ public class WW_Teleop2024 extends OpMode {
 
     double  //declares all double variables and their values
             speedVariable = .8;
+    int speedVariable1=0;
 
     //float[] hsvValuesRight = new float[3];
     //float[] hsvValuesLeft = new float[3];
@@ -34,11 +35,11 @@ public class WW_Teleop2024 extends OpMode {
      * INIT means initialize
      */
     DcMotorEx
-            rearLeftDrive = null,
-            rearRightDrive = null,
-            frontLeftDrive = null,
-            frontRightDrive = null,
-            armMotor = null;
+            rearLeft = null,
+            rearRight = null,
+            frontLeft = null,
+            frontRight = null,
+            liftMotor = null;
 
     // pixelArm = null;
     double hangerpos = 0.0;
@@ -88,46 +89,49 @@ public class WW_Teleop2024 extends OpMode {
 
     double liftPosition = LIFT_COLLAPSED;
     double armLiftComp = 0;
+    double cycletime = 0;
+    double looptime = 0;
+    double oldtime = 0;
 
     @Override
     public void init() { //initialization class to be used at start of tele-op
 
         // these are our motors and what they are called
-        rearLeftDrive = hardwareMap.get(DcMotorEx.class, "rear_left_drive");
+        rearLeft = hardwareMap.get(DcMotorEx.class, "rearLeft");
 
-        rearRightDrive = hardwareMap.get(DcMotorEx.class, "rear_right_drive");
-        frontLeftDrive = hardwareMap.get(DcMotorEx.class, "front_left_drive");
-        frontRightDrive = hardwareMap.get(DcMotorEx.class, "front_right_drive");
-        armMotor = hardwareMap.get(DcMotorEx.class, "armMotor");
+        rearRight = hardwareMap.get(DcMotorEx.class, "rearRight");
+        frontLeft = hardwareMap.get(DcMotorEx.class, "frontLeft");
+        frontRight = hardwareMap.get(DcMotorEx.class, "frontRight");
+        liftMotor = hardwareMap.get(DcMotorEx.class, "liftMotor");
 
 //Direction?
-        frontLeftDrive.setDirection(DcMotor.Direction.REVERSE);
-        frontRightDrive.setDirection(DcMotor.Direction.REVERSE);
-        rearLeftDrive.setDirection(DcMotor.Direction.FORWARD);
-        rearRightDrive.setDirection(DcMotor.Direction.FORWARD);
-        armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontRight.setDirection(DcMotor.Direction.REVERSE);
+        rearLeft.setDirection(DcMotor.Direction.FORWARD);
+        rearRight.setDirection(DcMotor.Direction.FORWARD);
+        liftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         // pixelArm.setDirection(DcMotor.Direction.REVERSE);
 
-        frontLeftDrive.setPower(0);
-        frontRightDrive.setPower(0);
-        rearLeftDrive.setPower(0);
-        rearRightDrive.setPower(0);
-        armMotor.setPower(0);
+        frontLeft.setPower(0);
+        frontRight.setPower(0);
+        rearLeft.setPower(0);
+        rearRight.setPower(0);
+        liftMotor.setPower(0);
 
-        frontLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rearLeftDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rearRightDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rearLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rearRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         //Setting motors to run without encoders
-        frontLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        frontRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rearLeftDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rearRightDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rearLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rearRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         /*This sets the maximum current that the control hub will apply to the arm before throwing a flag */
-        ((DcMotorEx) armMotor).setCurrentAlert(5, CurrentUnit.AMPS);
+        //((DcMotorEx) armMotor).setCurrentAlert(5, CurrentUnit.AMPS);
 
         //this will send a telemetry message to signify robot waiting;
         telemetry.addLine("AUTOBOTS ROLL OUT");
@@ -148,6 +152,11 @@ public class WW_Teleop2024 extends OpMode {
      */
     @Override
     public void start() {
+        liftMotor.setTargetPosition(0);
+        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        telemetrylift();
+
     }
 
     /*
@@ -167,28 +176,31 @@ public class WW_Teleop2024 extends OpMode {
         float FRspeed = -gamepad1.right_stick_y - gamepad1.right_stick_x;
         float BRspeed = -gamepad1.right_stick_y + gamepad1.right_stick_x;
 
-        rearLeftDrive.setPower(Range.clip((-BLspeed * speedVariable), -1, 1));
-        rearRightDrive.setPower(Range.clip((BRspeed * speedVariable), -1, 1));
-        frontLeftDrive.setPower(Range.clip((FLspeed * speedVariable), -1, 1));
-        frontRightDrive.setPower(Range.clip((-FRspeed * speedVariable), -1, 1));
+        rearLeft.setPower(Range.clip((-BLspeed * speedVariable), -1, 1));
+        rearRight.setPower(Range.clip((BRspeed * speedVariable), -1, 1));
+        frontLeft.setPower(Range.clip((FLspeed * speedVariable), -1, 1));
+        frontRight.setPower(Range.clip((-FRspeed * speedVariable), -1, 1));
 
 
         //DriveTrain Speed Controls
-        if (gamepad1.dpad_left) speedVariable -= 0.05;
-        if (gamepad1.dpad_right) speedVariable += 0.05;
+        if (gamepad1.dpad_left) speedVariable -= 0.1;
+        if (gamepad1.dpad_right) speedVariable += 0.1;
+
+       // armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         speedVariable = Range.clip(speedVariable, 0, 1);
-        if (gamepad1.right_trigger > 0.5 && hangerpos < 2000)
+     /*   if (gamepad1.right_trigger > 0.5 && hangerpos < 2000)
             hangerpos += 50;
         if (gamepad1.left_trigger > 0.5 && hangerpos > 40)
-            hangerpos -= 40;
+            hangerpos -= 40;*/
         /*This sets the maximum current that the control hub will apply to the arm before throwing a flag */
-        ((DcMotorEx) armMotor).setCurrentAlert(5, CurrentUnit.AMPS);
+       // ((DcMotorEx) armMotor).setCurrentAlert(5, CurrentUnit.AMPS);
          /* Before starting the armMotor. We'll make sure the TargetPosition is set to 0.
         Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
         If you do not have the encoder plugged into this motor, it will not run in this code. */
-        armMotor.setTargetPosition(0);
+    /*    armMotor.setTargetPosition(speedVariable1);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotor.setPower(0.8);
+        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);*/
         /* Send telemetry message to signify robot waiting */
         telemetry.addLine("Robot Ready.");
         telemetry.update();
@@ -206,41 +218,62 @@ public class WW_Teleop2024 extends OpMode {
             to start collecting. So it moves the armPosition to the ARM_COLLECT position,
             it folds out the wrist to make sure it is in the correct orientation to intake, and it
             turns the intake on to the COLLECT mode.*/
+        if (gamepad2.right_bumper){
+            liftPosition += 2800 * cycletime;
+        }
+        else if (gamepad2.left_bumper){
+            liftPosition -= 2800 * cycletime;
+        }
+        /*here we check to see if the lift is trying to go higher than the maximum extension.
+         *if it is, we set the variable to the max.
+         */
+        if (liftPosition > LIFT_SCORING_IN_HIGH_BASKET){
+            liftPosition = LIFT_SCORING_IN_HIGH_BASKET;
+        }
+        //same as above, we see if the lift is trying to go below 0, and if it is, we set it to 0.
+        if (liftPosition < 0){
+            liftPosition = 0;
+        }
 
-        if (gamepad1.a) {
+        liftMotor.setTargetPosition((int) (liftPosition));
+
+        ((DcMotorEx) liftMotor).setVelocity(2100);
+        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+     //  if (gamepad1.a) {
             /* This is the intaking/collecting arm position */
-            armPosition = ARM_COLLECT;
+         //   armPosition = ARM_COLLECT;
             //liftPosition = LIFT_COLLAPSED;
 
-        } else if (gamepad1.b) {
+      //  } else if (gamepad1.b) {
                     /* This is about 20° up from the collecting position to clear the barrier
                     Note here that we don't set the wrist position or the intake power when we
                     select this "mode", this means that the intake and wrist will continue what
                     they were doing before we clicked left bumper. */
-            armPosition = ARM_CLEAR_BARRIER;
-        } else if (gamepad1.x) {
+          //  armPosition = ARM_CLEAR_BARRIER;
+      //  } else if (gamepad1.x) {
             /* This is the correct height to score the sample in the HIGH BASKET */
-            armPosition = ARM_SCORE_SAMPLE_IN_LOW;
+         //   armPosition = ARM_SCORE_SAMPLE_IN_LOW;
             //liftPosition = LIFT_SCORING_IN_HIGH_BASKET;
-        } else if (gamepad1.dpad_left) {
+      //  } else if (gamepad1.dpad_left) {
                     /* This turns off the intake, folds in the wrist, and moves the arm
                     back to folded inside the robot. This is also the starting configuration */
-            armPosition = ARM_COLLAPSED_INTO_ROBOT;
+           // armPosition = ARM_COLLAPSED_INTO_ROBOT;
             //liftPosition = LIFT_COLLAPSED;
 
-        } else if (gamepad1.dpad_right) {
+       // } else if (gamepad1.dpad_right) {
             /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
-            armPosition = ARM_SCORE_SPECIMEN;
+         //   armPosition = ARM_SCORE_SPECIMEN;
 
-        } else if (gamepad1.dpad_up) {
+     //   } else if (gamepad1.dpad_up) {
             /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
-            armPosition = ARM_ATTACH_HANGING_HOOK;
+           // armPosition = ARM_ATTACH_HANGING_HOOK;
 
-        } else if (gamepad1.dpad_down) {
+       // } else if (gamepad1.dpad_down) {
             /* this moves the arm down to lift the robot up once it has been hooked */
-            armPosition = ARM_WINCH_ROBOT;
+          //  armPosition = ARM_WINCH_ROBOT;
 
-        }
+      //  }
 
             /*
             This is probably my favorite piece of code on this robot. It's a clever little software
@@ -257,21 +290,22 @@ public class WW_Teleop2024 extends OpMode {
             to a value.
              */
 
-        if (armPosition < 45 * ARM_TICKS_PER_DEGREE) {
+     /*   if (armPosition < 45 * ARM_TICKS_PER_DEGREE) {
             armLiftComp = (0.25568 * liftPosition);
         } else {
             armLiftComp = 0;
-        }
+        }*/
 
            /* Here we set the target position of our arm to match the variable that was selected
             by the driver. We add the armPosition Variable to our armPositionFudgeFactor, before adding
             our armLiftComp, which adjusts the arm height for different lift extensions.
             We also set the target velocity (speed) the motor runs at, and use setMode to run it.*/
 
-        armMotor.setTargetPosition((int) (armPosition + armPositionFudgeFactor + armLiftComp));
+       /* armMotor.setTargetPosition((int) (armPosition + armPositionFudgeFactor + armLiftComp));
 
         ((DcMotorEx) armMotor).setVelocity(2100);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotor.setPower(0.8);*/
 
 
             /* Here we set the lift position based on the driver input.
@@ -282,16 +316,18 @@ public class WW_Teleop2024 extends OpMode {
         //                        Telemetry                           //
         //==========================================================//
        telemetrymotorprint();
+        telemetrylift();
+
 
     }
     public void telemetrymotorprint(){
         telemetry.clear();
         telemetry.addData("Drive Train Speed: " , speedVariable);
-        telemetry.addData("BRMotor2", "Position : %2d, Power : %.2f", rearRightDrive.getCurrentPosition(), rearRightDrive.getPower());
-        telemetry.addData("FRMotor2", "Position : %2d, Power : %.2f", frontRightDrive.getCurrentPosition(), frontRightDrive.getPower());
+        telemetry.addData("BRMotor2", "Position : %2d, Power : %.2f", rearRight.getCurrentPosition(), rearRight.getPower());
+        telemetry.addData("FRMotor2", "Position : %2d, Power : %.2f", frontRight.getCurrentPosition(), frontRight.getPower());
 
-        telemetry.addData("FLMotor2", "Position : %2d, Power : %.2f", frontLeftDrive.getCurrentPosition(), frontLeftDrive.getPower());
-        telemetry.addData("BLMotor2", "Position : %2d, Power : %.2f", rearLeftDrive.getCurrentPosition(), rearLeftDrive.getPower());
+        telemetry.addData("FLMotor2", "Position : %2d, Power : %.2f", frontLeft.getCurrentPosition(), frontLeft.getPower());
+        telemetry.addData("BLMotor2", "Position : %2d, Power : %.2f", rearLeft.getCurrentPosition(), rearLeft.getPower());
         telemetry.addLine("left joystick | ")
                 .addData("x", gamepad1.left_stick_x)
                 .addData("y", gamepad1.left_stick_y);
@@ -304,6 +340,15 @@ public class WW_Teleop2024 extends OpMode {
         telemetry.update();
 
     }
+    public void telemetrylift(){
+        telemetry.addData("lift variable", liftPosition);
+        telemetry.addData("Lift Target Position",liftMotor.getTargetPosition());
+        telemetry.addData("lift current position", liftMotor.getCurrentPosition());
+        telemetry.addData("liftMotor Current:",((DcMotorEx) liftMotor).getCurrent(CurrentUnit.AMPS));
+        telemetry.update();
+
+    }
+
 
 
 
@@ -311,10 +356,11 @@ public class WW_Teleop2024 extends OpMode {
         @Override
         public void stop() {
             // Sets all motors to zero power except Arms to keep pos
-            frontLeftDrive.setPower(0);
-            rearLeftDrive.setPower(0);
-            frontRightDrive.setPower(0);
-            rearRightDrive.setPower(0);
+            frontLeft.setPower(0);
+            rearLeft.setPower(0);
+            frontRight.setPower(0);
+            rearRight.setPower(0);
+            liftMotor.setPower(0);
         }
         // pixelArm.setTargetPosition(pixelArm.getCurrentPosition());
 
