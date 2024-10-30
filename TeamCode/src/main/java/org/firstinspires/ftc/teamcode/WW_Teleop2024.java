@@ -26,8 +26,6 @@ public class WW_Teleop2024 extends OpMode {
             speedVariable = .8;
     int speedVariable1=0;
 
-    //float[] hsvValuesRight = new float[3];
-    //float[] hsvValuesLeft = new float[3];
 
 
     /*
@@ -42,21 +40,13 @@ public class WW_Teleop2024 extends OpMode {
             liftMotor = null;
 
     // pixelArm = null;
-    double hangerpos = 0.0;
-    /* This constant is the number of encoder ticks for each degree of rotation of the arm.
-   To find this, we first need to consider the total gear reduction powering our arm.
-   First, we have an external 20t:100t (5:1) reduction created by two spur gears.
-   But we also have an internal gear reduction in our motor.
-   The motor we use for this arm is a 117RPM Yellow Jacket. Which has an internal gear
-   reduction of ~50.9:1. (more precisely it is 250047/4913:1)
-   We can multiply these two ratios together to get our final reduction of ~254.47:1.
-   The motor's encoder counts 28 times per rotation. So in total you should see about 7125.16
-   counts per rotation of the arm. We divide that by 360 to get the counts per degree. */
-    final double ARM_TICKS_PER_DEGREE =
-            28 // number of encoder ticks per rotation of the bare motor
-                    * 250047.0 / 4913.0 // This is the exact gear ratio of the 50.9:1 Yellow Jacket gearbox
-                    * 100.0 / 20.0 // This is the external gear reduction, a 20T pinion gear that drives a 100T hub-mount gear
-                    * 1 / 360.0; // we want ticks per degree, not per rotation
+   // double hangerpos = 0.0;
+
+   // final double ARM_TICKS_PER_DEGREE =
+        //    28 // number of encoder ticks per rotation of the bare motor
+      //              * 250047.0 / 4913.0 // This is the exact gear ratio of the 50.9:1 Yellow Jacket gearbox
+       //             * 100.0 / 20.0 // This is the external gear reduction, a 20T pinion gear that drives a 100T hub-mount gear
+      //              * 1 / 360.0; // we want ticks per degree, not per rotation
     /* These constants hold the position that the arm is commanded to run to.
    These are relative to where the arm was located when you start the OpMode. So make sure the
    arm is reset to collapsed inside the robot before you start the program.
@@ -67,31 +57,36 @@ public class WW_Teleop2024 extends OpMode {
    160 * ARM_TICKS_PER_DEGREE. This asks the arm to move 160° from the starting position.
    If you'd like it to move further, increase that number. If you'd like it to not move
    as far from the starting position, decrease it. */
-    final double ARM_COLLAPSED_INTO_ROBOT = 0;
+   /* final double ARM_COLLAPSED_INTO_ROBOT = 0;
     final double ARM_COLLECT = 0 * ARM_TICKS_PER_DEGREE;
     final double ARM_CLEAR_BARRIER = 15 * ARM_TICKS_PER_DEGREE;
     final double ARM_SCORE_SPECIMEN = 90 * ARM_TICKS_PER_DEGREE;
     final double ARM_SCORE_SAMPLE_IN_LOW = 90 * ARM_TICKS_PER_DEGREE;
     final double ARM_ATTACH_HANGING_HOOK = 110 * ARM_TICKS_PER_DEGREE;
-    final double ARM_WINCH_ROBOT = 10 * ARM_TICKS_PER_DEGREE;
+    final double ARM_WINCH_ROBOT = 10 * ARM_TICKS_PER_DEGREE;*/
     HardwareMap hwMap = null;
     ElapsedTime runTime = new ElapsedTime();
     /* A number in degrees that the triggers can adjust the arm position by */
-    final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
+   // final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
     /* Variables that are used to set the arm to a specific position */
-    double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
-    double armPositionFudgeFactor;
-    final double LIFT_TICKS_PER_MM = (111132.0 / 289.0) / 120.0;
+   // double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
+    //double armPositionFudgeFactor;
+   // final double LIFT_TICKS_PER_MM = (111132.0 / 289.0) / 120.0;
 
-    final double LIFT_COLLAPSED = 0 * LIFT_TICKS_PER_MM;
-    final double LIFT_SCORING_IN_LOW_BASKET = 0 * LIFT_TICKS_PER_MM;
-    final double LIFT_SCORING_IN_HIGH_BASKET = 480 * LIFT_TICKS_PER_MM;
+  //  final double LIFT_COLLAPSED = 0 * LIFT_TICKS_PER_MM;
+  //  final double LIFT_SCORING_IN_LOW_BASKET = 0 * LIFT_TICKS_PER_MM;
+  //  final double LIFT_SCORING_IN_HIGH_BASKET = 480 * LIFT_TICKS_PER_MM;
 
-    double liftPosition = LIFT_COLLAPSED;
+   // double liftPosition = LIFT_COLLAPSED;
     double armLiftComp = 0;
     double cycletime = 0;
     double looptime = 0;
     double oldtime = 0;
+    double liftpos=0;
+    double liftpower=0.7;
+    double liftposincrement=1.1;
+    double minliftposition=2;
+    double maxliftposition=500;
 
     @Override
     public void init() { //initialization class to be used at start of tele-op
@@ -135,6 +130,7 @@ public class WW_Teleop2024 extends OpMode {
 
         //this will send a telemetry message to signify robot waiting;
         telemetry.addLine("AUTOBOTS ROLL OUT");
+        telemetrylift();
         telemetry.update();
         runTime.reset();
 
@@ -218,27 +214,35 @@ public class WW_Teleop2024 extends OpMode {
             to start collecting. So it moves the armPosition to the ARM_COLLECT position,
             it folds out the wrist to make sure it is in the correct orientation to intake, and it
             turns the intake on to the COLLECT mode.*/
-        if (gamepad2.right_bumper){
+       /* if (gamepad2.right_bumper){
             liftPosition += 2800 * cycletime;
         }
         else if (gamepad2.left_bumper){
             liftPosition -= 2800 * cycletime;
+        }*/
+        /* Program for slides to raise up and down */
+       if (gamepad2.right_bumper  && liftpos>minliftposition) {
+            liftpos -= liftposincrement;
+        }
+        if(gamepad2.left_bumper && liftpos<maxliftposition){
+            liftpos+=liftposincrement;
         }
         /*here we check to see if the lift is trying to go higher than the maximum extension.
          *if it is, we set the variable to the max.
          */
-        if (liftPosition > LIFT_SCORING_IN_HIGH_BASKET){
+        /*if (liftPosition > LIFT_SCORING_IN_HIGH_BASKET){
             liftPosition = LIFT_SCORING_IN_HIGH_BASKET;
-        }
+        }*/
         //same as above, we see if the lift is trying to go below 0, and if it is, we set it to 0.
-        if (liftPosition < 0){
+       /* if (liftPosition < 0){
             liftPosition = 0;
-        }
+        }*/
 
-        liftMotor.setTargetPosition((int) (liftPosition));
-
-        ((DcMotorEx) liftMotor).setVelocity(2100);
+        liftMotor.setTargetPosition((int) (liftpos));
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //((DcMotorEx) liftMotor).setVelocity(2100);
+        liftMotor.setPower(0.7);
+        //liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
      //  if (gamepad1.a) {
             /* This is the intaking/collecting arm position */
@@ -341,7 +345,7 @@ public class WW_Teleop2024 extends OpMode {
 
     }
     public void telemetrylift(){
-        telemetry.addData("lift variable", liftPosition);
+        telemetry.addData("lift variable", liftpos);
         telemetry.addData("Lift Target Position",liftMotor.getTargetPosition());
         telemetry.addData("lift current position", liftMotor.getCurrentPosition());
         telemetry.addData("liftMotor Current:",((DcMotorEx) liftMotor).getCurrent(CurrentUnit.AMPS));
