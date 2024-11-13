@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -38,6 +39,7 @@ public class WW_Teleop2024 extends OpMode {
             frontLeft = null,
             frontRight = null,
             liftMotor = null;
+    Servo intake1;
 
     // pixelArm = null;
    // double hangerpos = 0.0;
@@ -125,6 +127,7 @@ public class WW_Teleop2024 extends OpMode {
         rearLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rearRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         /*This sets the maximum current that the control hub will apply to the arm before throwing a flag */
         //((DcMotorEx) armMotor).setCurrentAlert(5, CurrentUnit.AMPS);
 
