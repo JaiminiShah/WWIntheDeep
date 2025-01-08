@@ -1,101 +1,140 @@
 package org.firstinspires.ftc.teamcode;
 
-import static com.qualcomm.robotcore.util.ElapsedTime.Resolution.SECONDS;
-
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServoImplEx;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@Autonomous(name="WW_Auto2024",group="WiredWoodmen")
-public class WW_Auto2024 extends LinearOpMode {
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.Objects;
 
-    public enum START_POSITION{
-        BLUE_LEFT,
-        BLUE_RIGHT,
-        RED_LEFT,
-        RED_RIGHT
+@Autonomous(name="WW_Auto2024", group="Autonomous")
+public class WW_Auto2024 extends AutoLinearAbstract2023 {
+
+    DcMotorEx armMotor,
+            liftMotor;
+
+    CRServoImplEx flapper;
+
+    ElapsedTime waitTimer;
+
+    public void wait(double waitTime) {
+        waitTimer = new ElapsedTime();
+        // waitTimer.reset();
+        while (waitTimer.seconds() < waitTime) {
+        }
+        waitTimer.reset();
     }
 
-    public static START_POSITION startPosition;
+    public void grabber() {
+        flapper.setPower(0.7);
+        wait(0.5);
+    }
+
+    public void eject() {
+        flapper.setPower(-0.7);
+        wait(1.0);
+    }
+
+    public void stop1() {
+        flapper.setPower(0);
+        wait(1.0);
+    }
+
+    public void upperBasket() {
+        armMotor.setTargetPosition((int) ARM_SCORE_SAMPLE_IN_HIGH);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotor.setPower(0.7);
+        wait(1.5);
+    }
+
+    public void lowerBasket() {
+        armMotor.setTargetPosition((int) ARM_SCORE_SAMPLE_IN_LOW);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotor.setPower(0.7);
+        wait(1.7);
+    }
+
+    public void slowerBasket() {
+        liftMotor.setTargetPosition(1400);
+        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor.setPower(0.7);
+        wait(0.7);
+    }
+
+    public void groundArm() {
+        armMotor.setTargetPosition((int) ARM_COLLECT);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotor.setPower(-0.7);
+        wait(0.7);
+    }
+
+    public void supperBasket() {
+        liftMotor.setTargetPosition(2000);
+        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor.setPower(0.7);
+        wait(0.7);
+    }
+
+    // Declare OpMode members specific to this Autonomous Opmode variant.
+    public void sstop() {
+        liftMotor.setTargetPosition(0);
+        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor.setPower(-0.7);
+        wait(0.7);
+    }
 
     @Override
-    public void runOpMode() throws InterruptedException {
-        selectStartingPosition();
-        telemetry.addData("Selected Starting Position", startPosition);
-        // Wait for the DS start button to be touched.
+    public void runOpMode() {
 
-        telemetry.addLine("The starting point of the robot is assumed to be on the starting tile, " +
-                "and along the edge of alliance chamber. ");
+        // Execute the typical autonomous program elements.
+        // super.runOpMode finishes as soon as the Drive Station start/play button is pressed.
+        RunAutoInput = true;
+        super.runOpMode();
+        //int ARM_UP = 180;
 
-        telemetry.addData(">", "Touch Play to start OpMode");
+        //  pixelArm.setTargetPosition(10);
+        // objectLocation = scanLocation();
+        //Now to take a nice cozy sleep zzzzz
+        // sleep(600);
+        // telemetry.addData("objectLocation",objectLocation);
+        // telemetry.update();
+
+
+        // turnToHeading(0);
+
+
+        driveTrain.goStraightToTarget(24.5, DRIVE_TRAIN_DEFAULT_SPEED);
+        while (!driveTrain.isMoveDone(MAX_DRIVE_TRAIN_POSITION_ERROR_INCHES)) {
+            telemetry.addLine("Going to place pixel on spike");
+            if (Kill(28)) {
+                break;
+            }
+        }
+        turnToHeading(-90);
+        driveTrain.goStraightToTarget(6, DRIVE_TRAIN_DEFAULT_SPEED);
+        while (!driveTrain.isMoveDone(MAX_DRIVE_TRAIN_POSITION_ERROR_INCHES)) {
+            telemetry.addLine("Going to place pixel on spike");
+            if (Kill(28)) {
+                break;
+            }
+        }
+        // waitTimer.wait(10);
+        // wait(200);
+        upperBasket();
+        supperBasket();
+        eject();
+        stop1();
+
+
+        telemetry.addLine("Autonomous Done");
         telemetry.update();
-        //Game Play Button  is pressed
-        if (opModeIsActive() && !isStopRequested()) {
-            //Build parking trajectory based on last detected target by vision
-            runAutonoumousMode();
-        }
-    }   // end runOpMode()
-    public void runAutonoumousMode() {
-        //Initialize Pose2d as desired
-        Pose2d initPose = new Pose2d(0, 0, 0); // Starting Pose
-        Pose2d moveBeyondTrussPose = new Pose2d(0, 0, 0);
-        Pose2d dropPurplePixelPose = new Pose2d(0, 0, 0);
-        Pose2d midwayPose1 = new Pose2d(0, 0, 0);
-        Pose2d midwayPose1a = new Pose2d(0, 0, 0);
-        Pose2d intakeStack = new Pose2d(0, 0, 0);
-        Pose2d midwayPose2 = new Pose2d(0, 0, 0);
-        Pose2d dropYellowPixelPose = new Pose2d(0, 0, 0);
-        Pose2d parkPose = new Pose2d(0, 0, 0);
-        double waitSecondsBeforeDrop = 0;
-        MecanumDrive drive = new MecanumDrive(hardwareMap, initPose);
-
-        initPose = new Pose2d(0, 0, Math.toRadians(0)); //Starting pose
-        moveBeyondTrussPose = new Pose2d(15, 0, 0);
     }
-
-        //Method to select starting position using X, Y, A, B buttons on gamepad
-    public void selectStartingPosition() {
-        telemetry.setAutoClear(true);
-        telemetry.clearAll();
-        //******select start pose*****
-        while(!isStopRequested()){
-
-            telemetry.addData("---------------------------------------","");
-            telemetry.addLine("This Auto program uses Open CV Vision Processor for Team Element detection");
-            telemetry.addData("Select Starting Position using XYAB on Logitech (or ▢ΔOX on Playstayion) on gamepad 1:","");
-            telemetry.addData("    Blue Left   ", "(X / ▢)");
-            telemetry.addData("    Blue Right ", "(Y / Δ)");
-            telemetry.addData("    Red Left    ", "(B / O)");
-            telemetry.addData("    Red Right  ", "(A / X)");
-            if(gamepad1.x){
-                startPosition = START_POSITION.BLUE_LEFT;
-                break;
-            }
-            if(gamepad1.y){
-                startPosition = START_POSITION.BLUE_RIGHT;
-                break;
-            }
-            if(gamepad1.b){
-                startPosition = START_POSITION.RED_LEFT;
-                break;
-            }
-            if(gamepad1.a){
-                startPosition = START_POSITION.RED_RIGHT;
-                break;
-            }
-            telemetry.update();
-        }
-        telemetry.clearAll();
-    }
-    //method to wait safely with stop button working if needed. Use this instead of sleep
-    public void safeWaitSeconds(double time) {
-        ElapsedTime timer = new ElapsedTime(SECONDS);
-        timer.reset();
-        while (!isStopRequested() && timer.time() < time) {
-        }
-    }
-
 }
+
+
+
+
