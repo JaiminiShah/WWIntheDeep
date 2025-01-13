@@ -66,9 +66,9 @@ public class WW_Auto2024 extends AutoLinearAbstract2023 {
     }
 
     public void groundArm() {
-        armMotor.setTargetPosition((int) ARM_COLLECT);
+        armMotor.setTargetPosition((int) ARM_CLEAR_BARRIER);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotor.setPower(-0.7);
+        armMotor.setPower(0.7);
         wait(0.7);
     }
 
@@ -128,6 +128,8 @@ public class WW_Auto2024 extends AutoLinearAbstract2023 {
         supperBasket();
         eject();
         stop1();
+
+
 
 
         telemetry.addLine("Autonomous Done");
