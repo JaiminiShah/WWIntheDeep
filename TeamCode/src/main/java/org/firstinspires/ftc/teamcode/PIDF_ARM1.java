@@ -20,10 +20,10 @@ public class PIDF_ARM1 extends OpMode {
 
     @Override
     public void init() {
+
         controller=new PIDController(p,i,d);
         telemetry=new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         liftMotor=hardwareMap.get(DcMotorEx.class,"liftMotor");
-
 
     }
 

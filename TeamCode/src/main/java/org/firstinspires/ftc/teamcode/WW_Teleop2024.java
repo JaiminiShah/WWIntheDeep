@@ -130,12 +130,14 @@ public class WW_Teleop2024 extends OpMode {
         If you do not have the encoder plugged into this motor, it will not run in this code. */
         armMotor.setTargetPosition(0);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotor.setPower(0);
+       // armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         liftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         liftMotor.setTargetPosition(0);
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftMotor.setPower(0);
+        //liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         /* Define and initialize servos.*/
         flapper = hardwareMap.get(CRServoImplEx.class, "flapper");
@@ -249,17 +251,9 @@ public class WW_Teleop2024 extends OpMode {
         //==========================================================//
 
         telemetrylift();
-        try {
-            runTime.wait(10000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+
         telemetryarm();
-        try {
-            runTime.wait(10000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+
 
 
     }

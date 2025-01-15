@@ -23,13 +23,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 
 public class WW_Telop2024 extends OpMode {
-
-
-    double  //declares all double variables and their values
-            speedVariable = .8;
-    int speedVariable1=0;
-
-
+     //declares all double variables and their values
+        double speedVariable = .7;
+         int speedVariable1=0;
 
     /*
      * Code will run ONCE when the driver hits INIT
@@ -55,8 +51,8 @@ public class WW_Telop2024 extends OpMode {
     final double ARM_COLLECT = 0 * ARM_TICKS_PER_DEGREE;
     final double ARM_CLEAR_BARRIER = 15 * ARM_TICKS_PER_DEGREE;
     final double ARM_SCORE_SPECIMEN = 90 * ARM_TICKS_PER_DEGREE;
-    final double ARM_SCORE_SAMPLE_IN_LOW= 50.933 * ARM_TICKS_PER_DEGREE;
-    final double ARM_SCORE_SAMPLE_IN_HIGH=101.867 * ARM_TICKS_PER_DEGREE;
+    final double ARM_SCORE_SAMPLE_IN_LOW= 23.5 * ARM_TICKS_PER_DEGREE;
+    final double ARM_SCORE_SAMPLE_IN_HIGH=21.5 * ARM_TICKS_PER_DEGREE;
     final double ARM_ATTACH_HANGING_HOOK = 110 * ARM_TICKS_PER_DEGREE;
     final double ARM_WINCH_ROBOT = 10 * ARM_TICKS_PER_DEGREE;
     HardwareMap hwMap = null;
@@ -101,15 +97,15 @@ public class WW_Telop2024 extends OpMode {
         frontRight = hardwareMap.get(DcMotorEx.class, "frontRight");
         liftMotor = hardwareMap.get(DcMotorEx.class, "liftMotor");
         armMotor=hardwareMap.get(DcMotorEx.class,"armMotor");
-
-
-//Direction?
+        flapper = hardwareMap.get(CRServoImplEx.class, "flapper");
+        //Direction?
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         frontRight.setDirection(DcMotor.Direction.REVERSE);
         rearLeft.setDirection(DcMotor.Direction.FORWARD);
         rearRight.setDirection(DcMotor.Direction.FORWARD);
 
         armMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        liftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         // pixelArm.setDirection(DcMotor.Direction.REVERSE);
 
         frontLeft.setPower(0);
@@ -132,6 +128,7 @@ public class WW_Telop2024 extends OpMode {
         rearLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rearRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
 
         /*This sets the maximum current that the control hub will apply to the arm before throwing a flag */
@@ -142,15 +139,15 @@ public class WW_Telop2024 extends OpMode {
         If you do not have the encoder plugged into this motor, it will not run in this code. */
         armMotor.setTargetPosition(0);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotor.setPower(0);
 
-        liftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
         liftMotor.setTargetPosition(0);
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftMotor.setPower(0);
 
         /* Define and initialize servos.*/
-        flapper = hardwareMap.get(CRServoImplEx.class, "flapper");
+
       //  intake1  = hardwareMap.get(ServoImplEx.class, "intake1");
 
         /* Make sure that the intake is off, and the wrist is folded in. */
@@ -229,7 +226,7 @@ public class WW_Telop2024 extends OpMode {
         double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
         // Rotate the movement direction counter to the bot's rotation
-        double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
+      /*  double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
         double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
 
         rotX = rotX * 1.1;  // Counteract imperfect strafing
@@ -246,10 +243,10 @@ public class WW_Telop2024 extends OpMode {
         frontLeft.setPower(frontLeftPower);
         rearLeft.setPower(backLeftPower);
         frontRight.setPower(frontRightPower);
-        rearRight.setPower(backRightPower);
+        rearRight.setPower(backRightPower);*/
 
 
-       /* float FLspeed = -gamepad1.left_stick_y + gamepad1.left_stick_x;
+        float FLspeed = -gamepad1.left_stick_y + gamepad1.left_stick_x;
         float BLspeed = -gamepad1.left_stick_y - gamepad1.left_stick_x;
         float FRspeed = -gamepad1.right_stick_y - gamepad1.right_stick_x;
         float BRspeed = -gamepad1.right_stick_y + gamepad1.right_stick_x;
@@ -257,7 +254,7 @@ public class WW_Telop2024 extends OpMode {
         rearLeft.setPower(Range.clip((-BLspeed * speedVariable), -1, 1));
         rearRight.setPower(Range.clip((BRspeed * speedVariable), -1, 1));
         frontLeft.setPower(Range.clip((FLspeed * speedVariable), -1, 1));
-        frontRight.setPower(Range.clip((-FRspeed * speedVariable), -1, 1));*/
+        frontRight.setPower(Range.clip((-FRspeed * speedVariable), -1, 1));
 
 
         //DriveTrain Speed Controls
@@ -281,20 +278,20 @@ public class WW_Telop2024 extends OpMode {
             it folds out the wrist to make sure it is in the correct orientation to intake, and it
             turns the intake on to the COLLECT mode.*/
         // Controls for arm slide
-        if (gamepad2.right_trigger > .1) {
+     /*   if (gamepad2.right_trigger > .1) {
             liftPosition += 350 * cycletime;
         }
 
         else if (gamepad2.left_trigger > .1) {
             liftPosition -= 350 * cycletime;
-        }
+        }*/
 
 
         /* Program for slides to raise up and down */
-       if (gamepad2.right_bumper  && liftpos>0) {
+       if (gamepad2.right_bumper  && liftPosition>0) {
             liftPosition -= liftposincrement;
         }
-        if(gamepad2.left_bumper && liftpos<2000){
+        if(gamepad2.left_bumper && liftPosition<2000){
             liftPosition+=liftposincrement;
         }
         /*here we check to see if the lift is trying to go higher than the maximum extension.
@@ -474,6 +471,9 @@ public class WW_Telop2024 extends OpMode {
             rearLeft.setPower(0);
             frontRight.setPower(0);
             rearRight.setPower(0);
+            armMotor.setTargetPosition((int)ARM_CLEAR_BARRIER);
+            armMotor.setVelocity(200);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor.setPower(0);
             flapper.setPower(0);
         }
