@@ -6,22 +6,17 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Objects;
+@Autonomous(name="WW_AutoBL2024", group="Autonomous")
+public class WW_AutoBL2024 extends AutoLinearAbstract2023 {
 
-@Autonomous(name="WW_Auto2024", group="Autonomous")
-public class WW_Auto2024 extends AutoLinearAbstract2023 {
+  //  DcMotorEx armMotor,
+     //       liftMotor;
 
-    DcMotorEx armMotor,
-            liftMotor;
-
-    CRServoImplEx flapper;
+  //  CRServoImplEx flapper;
 
     ElapsedTime waitTimer;
 
-    public void wait(double waitTime) {
+   public void wait(double waitTime) {
         waitTimer = new ElapsedTime();
         // waitTimer.reset();
         while (waitTimer.seconds() < waitTime) {
@@ -29,12 +24,12 @@ public class WW_Auto2024 extends AutoLinearAbstract2023 {
         waitTimer.reset();
     }
 
-    public void grabber() {
+  /*  public void grabber() {
         flapper.setPower(0.7);
-        wait(0.5);
-    }
 
-    public void eject() {
+    }*/
+
+ /*   public void eject() {
         flapper.setPower(-0.7);
         wait(1.0);
     }
@@ -42,37 +37,37 @@ public class WW_Auto2024 extends AutoLinearAbstract2023 {
     public void stop1() {
         flapper.setPower(0);
         wait(1.0);
-    }
+    }*/
 
-    public void upperBasket() {
+    /*public void upperBasket() {
         armMotor.setTargetPosition((int) ARM_SCORE_SAMPLE_IN_HIGH);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armMotor.setPower(0.7);
         wait(1.5);
-    }
+    }*/
 
-    public void lowerBasket() {
+   /* public void lowerBasket() {
         armMotor.setTargetPosition((int) ARM_SCORE_SAMPLE_IN_LOW);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armMotor.setPower(0.7);
         wait(1.7);
-    }
+    }*/
 
-    public void slowerBasket() {
+  /* public void slowerBasket() {
         liftMotor.setTargetPosition(1400);
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         liftMotor.setPower(0.7);
         wait(0.7);
-    }
+    }*/
 
-    public void groundArm() {
+  /*  public void groundArm() {
         armMotor.setTargetPosition((int) ARM_CLEAR_BARRIER);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armMotor.setPower(0.7);
         wait(0.7);
-    }
+    }*/
 
-    public void supperBasket() {
+ /*   public void supperBasket() {
         liftMotor.setTargetPosition(2000);
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         liftMotor.setPower(0.7);
@@ -85,27 +80,15 @@ public class WW_Auto2024 extends AutoLinearAbstract2023 {
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         liftMotor.setPower(-0.7);
         wait(0.7);
-    }
+    }*/
 
     @Override
-    public void runOpMode() {
+    public void runOpMode()  {
 
         // Execute the typical autonomous program elements.
         // super.runOpMode finishes as soon as the Drive Station start/play button is pressed.
         RunAutoInput = true;
         super.runOpMode();
-        //int ARM_UP = 180;
-
-        //  pixelArm.setTargetPosition(10);
-        // objectLocation = scanLocation();
-        //Now to take a nice cozy sleep zzzzz
-        // sleep(600);
-        // telemetry.addData("objectLocation",objectLocation);
-        // telemetry.update();
-
-
-        // turnToHeading(0);
-
 
         driveTrain.goStraightToTarget(24.5, DRIVE_TRAIN_DEFAULT_SPEED);
         while (!driveTrain.isMoveDone(MAX_DRIVE_TRAIN_POSITION_ERROR_INCHES)) {
@@ -115,6 +98,8 @@ public class WW_Auto2024 extends AutoLinearAbstract2023 {
             }
         }
         turnToHeading(-90);
+        sleep(10);
+
         driveTrain.goStraightToTarget(6, DRIVE_TRAIN_DEFAULT_SPEED);
         while (!driveTrain.isMoveDone(MAX_DRIVE_TRAIN_POSITION_ERROR_INCHES)) {
             telemetry.addLine("Going to place pixel on spike");
@@ -122,15 +107,18 @@ public class WW_Auto2024 extends AutoLinearAbstract2023 {
                 break;
             }
         }
+        driveTrain.StrafeRightToTarget(6,DRIVE_TRAIN_DEFAULT_SPEED);
+        while (!driveTrain.isMoveDone(MAX_DRIVE_TRAIN_POSITION_ERROR_INCHES)) {
+            telemetry.addLine("Going to place pixel on spike");
+            if (Kill(28)) {
+                break;
+            }
+        }
+
         // waitTimer.wait(10);
         // wait(200);
-        upperBasket();
-        supperBasket();
-        eject();
-        stop1();
 
-
-
+       // waitTimer.wait(10);
 
         telemetry.addLine("Autonomous Done");
         telemetry.update();

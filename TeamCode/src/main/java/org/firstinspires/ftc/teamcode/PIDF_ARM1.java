@@ -16,26 +16,27 @@ public class PIDF_ARM1 extends OpMode {
     public static double f=0;
     public static int target=0;
     private final double ticks_in_degree=537.6/360;
-    private DcMotorEx liftMotor;
+    private DcMotorEx armMotor;
 
     @Override
     public void init() {
 
         controller=new PIDController(p,i,d);
         telemetry=new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        liftMotor=hardwareMap.get(DcMotorEx.class,"liftMotor");
+        armMotor=hardwareMap.get(DcMotorEx.class,"armMotor");
 
     }
 
     @Override
     public void loop() {
+
         controller.setPID(p,i,d);
-        int liftPos=liftMotor.getCurrentPosition();
-        double pid= controller.calculate(liftPos,target);
+        int armPos=armMotor.getCurrentPosition();
+        double pid= controller.calculate(armPos,target);
         double ff=Math.cos(Math.toRadians(target/ticks_in_degree))*f;
         double power=pid+ff;
-        liftMotor.setPower(power);
-        telemetry.addData("position",liftPos);
+        armMotor.setPower(power);
+        telemetry.addData("position",armPos);
         telemetry.addData("target",target);
         telemetry.update();
 

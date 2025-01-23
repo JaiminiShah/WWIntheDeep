@@ -32,7 +32,10 @@
 
  import static com.qualcomm.hardware.rev.RevHubOrientationOnRobot.xyzOrientation;
 
+ import com.qualcomm.robotcore.hardware.CRServo;
+ import com.qualcomm.robotcore.hardware.CRServoImplEx;
  import com.qualcomm.robotcore.hardware.DcMotorEx;
+ import com.qualcomm.robotcore.hardware.DcMotorSimple;
  import com.qualcomm.robotcore.hardware.DigitalChannel;
 
  import android.text.method.Touch;
@@ -73,7 +76,9 @@
      // OBJECTS
      MecanumDrive1
              driveTrain;
-
+    // DcMotorEx armMotor=null;
+     //DcMotorEx liftMotor = null;
+     //CRServo flapper=null;
 
 
      //declares timers that we use
@@ -116,8 +121,8 @@
      // however, changing one of these numbers will change it for all(speeds)
      final double
              MAX_DRIVE_TRAIN_POSITION_ERROR_INCHES = .25,
-             DRIVE_TRAIN_STRAIGHT_SPEED = 0.9,
-             DRIVE_TRAIN_DEFAULT_SPEED = 0.7,
+             DRIVE_TRAIN_STRAIGHT_SPEED = 0.5,
+             DRIVE_TRAIN_DEFAULT_SPEED = 0.5,
              HEADING_THRESHOLD       = 0.25,
              P_TURN_GAIN            = 0.1;     // Larger is more responsive, but also less stable
 
@@ -138,6 +143,17 @@
       * ------------------------------------------------------- */
      @Override
      public void runOpMode() {
+       /*  armMotor=hardwareMap.get(DcMotorEx.class,)
+        // liftMotor = hardwareMap.get(DcMotorEx.class, "liftMotor");
+        // flapper = hardwareMap.get(CRServoImplEx.class, "flapper");
+         liftMotor.setDirection(DcMotor.Direction.REVERSE);
+         liftMotor.setPower(0);
+         liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+         liftMotor.setPower(0.7);
+         liftMotor.setTargetPosition(0);
+         flapper.setPower(0);*/
+
 
          safeStop = false; //Used for stopping robot
          /* INITIALIZE ROBOT - ESTABLISH ROBOT OBJECTS */

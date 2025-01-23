@@ -26,7 +26,6 @@ public class WW_Telop2024 extends OpMode {
      //declares all double variables and their values
         double speedVariable = .7;
          int speedVariable1=0;
-
     /*
      * Code will run ONCE when the driver hits INIT
      * INIT means initialize
@@ -37,7 +36,8 @@ public class WW_Telop2024 extends OpMode {
             frontLeft = null,
             frontRight = null,
             liftMotor = null,
-            armMotor=null;
+            armMotor=null,
+            hangmotor=null;
    // ServoImplEx intake1;
     CRServoImplEx flapper;
 
@@ -62,11 +62,10 @@ public class WW_Telop2024 extends OpMode {
     /* Variables that are used to set the arm to a specific position */
     double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
-    final double LIFT_COLLAPSED = 0;
-    //  final double LIFT_SCORING_IN_LOW_BASKET = 70 * LIFT_TICKS_PER_MM;
-      final double LIFT_SCORING_IN_HIGH_BASKET = 2000;
+    double hangerPos;
 
-   double liftPosition = LIFT_COLLAPSED;
+
+   double liftPosition = 0;
    /* Variables to store the speed the intake servo should be set at to intake, and deposit game elements. */
    /*final double INTAKE_COLLECT    = -1.0;
     final double INTAKE_OFF        =  0.0;
@@ -77,12 +76,10 @@ public class WW_Telop2024 extends OpMode {
 
 
     double armLiftComp = 0;
-    double cycletime = 0;
-    double looptime = 0;
-    double oldtime = 0;
+
     double liftpos=0;
     double liftpower=0.7;
-    double liftposincrement=1.1;
+    double liftposincrement=23;
     double minliftposition=2;
     double maxliftposition=500;
 
@@ -98,22 +95,17 @@ public class WW_Telop2024 extends OpMode {
         liftMotor = hardwareMap.get(DcMotorEx.class, "liftMotor");
         armMotor=hardwareMap.get(DcMotorEx.class,"armMotor");
         flapper = hardwareMap.get(CRServoImplEx.class, "flapper");
+        hangmotor=hardwareMap.get(DcMotorEx.class,"hangmotor");
         //Direction?
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         frontRight.setDirection(DcMotor.Direction.REVERSE);
         rearLeft.setDirection(DcMotor.Direction.FORWARD);
         rearRight.setDirection(DcMotor.Direction.FORWARD);
 
-        armMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         liftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        hangmotor.setDirection(DcMotorSimple.Direction.REVERSE);
         // pixelArm.setDirection(DcMotor.Direction.REVERSE);
-
-        frontLeft.setPower(0);
-        frontRight.setPower(0);
-        rearLeft.setPower(0);
-        rearRight.setPower(0);
-        liftMotor.setPower(0);
-        armMotor.setPower(0);
 
         frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -121,6 +113,7 @@ public class WW_Telop2024 extends OpMode {
         rearRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        hangmotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         //Setting motors to run without encoders
         frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -129,22 +122,32 @@ public class WW_Telop2024 extends OpMode {
         rearRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        hangmotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-
+        frontLeft.setPower(0);
+        frontRight.setPower(0);
+        rearLeft.setPower(0);
+        rearRight.setPower(0);
+        liftMotor.setPower(0);
+        armMotor.setPower(0);
+        hangmotor.setPower(0);
         /*This sets the maximum current that the control hub will apply to the arm before throwing a flag */
-        ((DcMotorEx) armMotor).setCurrentAlert(5, CurrentUnit.AMPS);
+       // ((DcMotorEx) armMotor).setCurrentAlert(5, CurrentUnit.AMPS);
 
         /* Before starting the armMotor. We'll make sure the TargetPosition is set to 0.
         Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
         If you do not have the encoder plugged into this motor, it will not run in this code. */
         armMotor.setTargetPosition(0);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armMotor.setPower(0);
 
 
         liftMotor.setTargetPosition(0);
-        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+      //  liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         liftMotor.setPower(0);
+        hangmotor.setTargetPosition(0);
+        hangmotor.setPower(0);
+        telemetryarm();
 
         /* Define and initialize servos.*/
 
@@ -156,6 +159,7 @@ public class WW_Telop2024 extends OpMode {
 
         //this will send a telemetry message to signify robot waiting;
         telemetry.addLine("AUTOBOTS ROLL OUT");
+        telemetryarm();
         telemetrylift();
         telemetry.update();
         runTime.reset();
@@ -167,6 +171,9 @@ public class WW_Telop2024 extends OpMode {
      */
     @Override
     public void init_loop() {
+        telemetryarm();
+        telemetrylift();
+        telemetryhanger();
     }
 
     /*
@@ -176,9 +183,9 @@ public class WW_Telop2024 extends OpMode {
     public void start() {
 
 
-        liftMotor.setTargetPosition(0);
-        liftMotor.setPower(-0.6);
-        liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+      //  liftMotor.setTargetPosition(0);
+        liftMotor.setPower(0.0);
+      //  liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         telemetrylift();
 
     }
@@ -194,7 +201,7 @@ public class WW_Telop2024 extends OpMode {
         //==========================================================
         // Retrieve the IMU from the hardware map
         // armRotator manual lifting mostly for testing or as a last resort
-        if(gamepad1.right_trigger>.1){
+     /*   if(gamepad1.right_trigger>.1){
             armMotor.setPower(.75);
             //armMotor.setPower(.75);
         }
@@ -202,7 +209,7 @@ public class WW_Telop2024 extends OpMode {
         else if(gamepad1.left_trigger>.1){
             armMotor.setPower(-.75);
 
-        }
+        }*/
 
         IMU imu = hardwareMap.get(IMU.class, "imu");
         // Adjust the orientation parameters to match your robot
@@ -211,10 +218,6 @@ public class WW_Telop2024 extends OpMode {
                 RevHubOrientationOnRobot.UsbFacingDirection.UP));
         // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
-        //Controls Drive Train
-        double y = -gamepad1.left_stick_y;
-        double x = gamepad1.left_stick_x;
-        double rx = gamepad1.right_stick_x;
 
         // This button choice was made so that it is hard to hit on accident,
         // it can be freely changed based on preference.
@@ -223,27 +226,7 @@ public class WW_Telop2024 extends OpMode {
             imu.resetYaw();
         }
 
-        double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
-        // Rotate the movement direction counter to the bot's rotation
-      /*  double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
-        double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
-
-        rotX = rotX * 1.1;  // Counteract imperfect strafing
-
-        // Denominator is the largest motor power (absolute value) or 1
-        // This ensures all the powers maintain the same ratio,
-        // but only if at least one is out of the range [-1, 1]
-        double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
-        double frontLeftPower = (rotY + rotX + rx) / denominator;
-        double backLeftPower = (rotY - rotX + rx) / denominator;
-        double frontRightPower = (rotY - rotX - rx) / denominator;
-        double backRightPower = (rotY + rotX - rx) / denominator;
-
-        frontLeft.setPower(frontLeftPower);
-        rearLeft.setPower(backLeftPower);
-        frontRight.setPower(frontRightPower);
-        rearRight.setPower(backRightPower);*/
 
 
         float FLspeed = -gamepad1.left_stick_y + gamepad1.left_stick_x;
@@ -271,23 +254,9 @@ public class WW_Telop2024 extends OpMode {
         telemetry.addLine("Robot Ready.");
         telemetry.update();
 
-         /* Here we implement a set of if else statements to set our arm to different scoring positions.
-            We check to see if a specific button is pressed, and then move the arm (and sometimes
-            intake and wrist) to match. For example, if we click the right bumper we want the robot
-            to start collecting. So it moves the armPosition to the ARM_COLLECT position,
-            it folds out the wrist to make sure it is in the correct orientation to intake, and it
-            turns the intake on to the COLLECT mode.*/
-        // Controls for arm slide
-     /*   if (gamepad2.right_trigger > .1) {
-            liftPosition += 350 * cycletime;
-        }
-
-        else if (gamepad2.left_trigger > .1) {
-            liftPosition -= 350 * cycletime;
-        }*/
-
 
         /* Program for slides to raise up and down */
+        /* When you press right bumper and left bumper for gamepad2 it will move slides*/
        if (gamepad2.right_bumper  && liftPosition>0) {
             liftPosition -= liftposincrement;
         }
@@ -297,8 +266,8 @@ public class WW_Telop2024 extends OpMode {
         /*here we check to see if the lift is trying to go higher than the maximum extension.
          *if it is, we set the variable to the max.
          */
-       if (liftPosition > LIFT_SCORING_IN_HIGH_BASKET){
-            liftPosition= LIFT_SCORING_IN_HIGH_BASKET;
+       if (liftPosition > 2300){
+            liftPosition= 2300;
         }
         //same as above, we see if the lift is trying to go below 0, and if it is, we set it to 0.
         if (liftPosition < 0){
@@ -308,6 +277,7 @@ public class WW_Telop2024 extends OpMode {
         liftMotor.setTargetPosition((int) (liftPosition));
         ((DcMotorEx) liftMotor).setVelocity(400);
         liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
         // Code to move arm to certain position
        if (gamepad2.a) {
             /* This is the intaking/collecting arm position */
@@ -328,24 +298,7 @@ public class WW_Telop2024 extends OpMode {
        } else if (gamepad2.y){
            armPosition=ARM_SCORE_SAMPLE_IN_HIGH;
        }
-       else if (gamepad2.dpad_left) {
-                    /* This turns off the intake, folds in the wrist, and moves the arm
-                    back to folded inside the robot. This is also the starting configuration */
-           armPosition = ARM_COLLAPSED_INTO_ROBOT;
-            //liftPosition = LIFT_COLLAPSED;
 
-        } else if (gamepad2.dpad_right) {
-            /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
-            armPosition = ARM_SCORE_SPECIMEN;
-       } else if (gamepad2.dpad_up) {
-            /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
-           armPosition = ARM_ATTACH_HANGING_HOOK;
-
-        } else if (gamepad2.dpad_down) {
-            /* this moves the arm down to lift the robot up once it has been hooked */
-           armPosition = ARM_WINCH_ROBOT;
-
-       }
 
             /*
             This is probably my favorite piece of code on this robot. It's a clever little software
@@ -372,19 +325,16 @@ public class WW_Telop2024 extends OpMode {
             by the driver. We add the armPosition Variable to our armPositionFudgeFactor, before adding
             our armLiftComp, which adjusts the arm height for different lift extensions.
             We also set the target velocity (speed) the motor runs at, and use setMode to run it.*/
+    while (runTime.seconds()<20) {
+        armMotor.setTargetPosition((int) (armPosition + armLiftComp + FUDGE_FACTOR));
 
-       armMotor.setTargetPosition((int) (armPosition + armLiftComp));
-
-        ((DcMotorEx) armMotor).setVelocity(300);
+        ((DcMotorEx) armMotor).setVelocity(700);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-       // armMotor.setPower(0.8);
-        /* Using Gamepad2 right bumper and left bumper to intake samples
-        and drop samples
-         */
-        if (gamepad2.left_bumper){
+    }
+        if (gamepad2.left_trigger>0.1){
             flapper.setPower(-0.7);
             telemetry.addData("Intake Status", "Grabbing");
-        }else if (gamepad2.right_bumper){
+        }else if (gamepad2.right_trigger>0.1){
             flapper.setPower(0.7);
             telemetry.addData("Intake Status", "Ejecting");
         }else{
@@ -401,9 +351,11 @@ public class WW_Telop2024 extends OpMode {
             We can take the current time (12:01.2) and subtract the oldtime (12:01.1) and we're left
             with just the difference, 0.1 seconds.
              */
-        looptime = getRuntime();
-        cycletime = looptime-oldtime;
-        oldtime = looptime;
+         // Hanger
+        //Hanger
+        if(gamepad1.right_trigger > .5 && hangerPos<5000) hangerPos += 80;
+        if(gamepad1.left_trigger > .5&& hangerPos>10) hangerPos -= 40;
+        hangmotor.setTargetPosition((int)hangerPos);
 
 
         //==========================================================//
@@ -454,14 +406,19 @@ public class WW_Telop2024 extends OpMode {
 
     }
     public void telemetryarm(){
+        telemetry.addData("Arm Position",armPosition);
         telemetry.addData("arm Target Position: ", armMotor.getTargetPosition());
         telemetry.addData("arm Encoder: ", armMotor.getCurrentPosition());
-        telemetry.addData("Lift motor velocity",armMotor.getVelocity());
+        telemetry.addData("Arm motor velocity",armMotor.getVelocity());
         telemetry.addData("Arm Motor current",armMotor.getCurrent(CurrentUnit.AMPS));
     }
-
-
-
+    public void telemetryhanger(){
+        telemetry.addData("hanger Position",hangerPos);
+        telemetry.addData("Arm Target Position: ",hangmotor.getTargetPosition());
+        telemetry.addData("arm Encoder:",hangmotor.getCurrentPosition());
+        telemetry.addData("Arm motor velocity",hangmotor.getVelocity());
+        telemetry.addData("Arm Motor current",hangmotor.getCurrent(CurrentUnit.AMPS));
+    }
 
       //Code will run ONCE after the driver hits STOP
         @Override
@@ -476,6 +433,7 @@ public class WW_Telop2024 extends OpMode {
             armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor.setPower(0);
             flapper.setPower(0);
+            hangmotor.setPower(0);
         }
         // pixelArm.setTargetPosition(pixelArm.getCurrentPosition());
 
