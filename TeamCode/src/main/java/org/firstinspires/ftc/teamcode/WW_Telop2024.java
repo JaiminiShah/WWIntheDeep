@@ -44,8 +44,8 @@ public class WW_Telop2024 extends OpMode {
     // pixelArm = null;
    // double hangerpos = 0.0;
 
-    final double ARM_TICKS_PER_DEGREE =
-            28 *(250047.0/4913.0)*(100.0/20.0)*1/360.0;
+    final double ARM_TICKS_PER_DEGREE =76.036;
+           // 28 *(250047.0/4913.0)*(100.0/20.0)*1/360.0;
     // ARM_TICKS_PER_DEGREE is 19.794
     final double ARM_COLLAPSED_INTO_ROBOT = 0;
     final double ARM_COLLECT = 0 * ARM_TICKS_PER_DEGREE;
@@ -95,7 +95,7 @@ public class WW_Telop2024 extends OpMode {
         liftMotor = hardwareMap.get(DcMotorEx.class, "liftMotor");
         armMotor=hardwareMap.get(DcMotorEx.class,"armMotor");
         flapper = hardwareMap.get(CRServoImplEx.class, "flapper");
-        hangmotor=hardwareMap.get(DcMotorEx.class,"hangmotor");
+        hangmotor=hardwareMap.get(DcMotorEx.class,"hangMotor");
         //Direction?
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
         frontRight.setDirection(DcMotor.Direction.REVERSE);
@@ -182,8 +182,12 @@ public class WW_Telop2024 extends OpMode {
     @Override
     public void start() {
 
+        armMotor.setTargetPosition((int)ARM_CLEAR_BARRIER);
+        ((DcMotorEx) armMotor).setVelocity(300);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-      //  liftMotor.setTargetPosition(0);
+
+        //  liftMotor.setTargetPosition(0);
         liftMotor.setPower(0.0);
       //  liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         telemetrylift();
@@ -260,7 +264,7 @@ public class WW_Telop2024 extends OpMode {
        if (gamepad2.right_bumper  && liftPosition>0) {
             liftPosition -= liftposincrement;
         }
-        if(gamepad2.left_bumper && liftPosition<2000){
+        if(gamepad2.left_bumper && liftPosition<2300){
             liftPosition+=liftposincrement;
         }
         /*here we check to see if the lift is trying to go higher than the maximum extension.
@@ -282,6 +286,7 @@ public class WW_Telop2024 extends OpMode {
        if (gamepad2.a) {
             /* This is the intaking/collecting arm position */
            armPosition = ARM_COLLECT;
+
             //liftPosition = LIFT_COLLAPSED;
 
         } else if (gamepad2.b) {
@@ -330,6 +335,7 @@ public class WW_Telop2024 extends OpMode {
 
         ((DcMotorEx) armMotor).setVelocity(700);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
     }
         if (gamepad2.left_trigger>0.1){
             flapper.setPower(-0.7);
@@ -384,6 +390,7 @@ public class WW_Telop2024 extends OpMode {
 
         telemetry.addData("FLMotor2", "Position : %2d, Power : %.2f", frontLeft.getCurrentPosition(), frontLeft.getPower());
         telemetry.addData("BLMotor2", "Position : %2d, Power : %.2f", rearLeft.getCurrentPosition(), rearLeft.getPower());
+
         telemetry.addLine("left joystick | ")
                 .addData("x", gamepad1.left_stick_x)
                 .addData("y", gamepad1.left_stick_y);

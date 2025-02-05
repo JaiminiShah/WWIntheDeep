@@ -32,32 +32,22 @@
 
  import static com.qualcomm.hardware.rev.RevHubOrientationOnRobot.xyzOrientation;
 
- import com.qualcomm.robotcore.hardware.CRServo;
- import com.qualcomm.robotcore.hardware.CRServoImplEx;
- import com.qualcomm.robotcore.hardware.DcMotorEx;
- import com.qualcomm.robotcore.hardware.DcMotorSimple;
- import com.qualcomm.robotcore.hardware.DigitalChannel;
-
- import android.text.method.Touch;
-
- import com.qualcomm.hardware.bosch.BNO055IMU;
- import com.qualcomm.hardware.dfrobot.HuskyLens;
  import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
  import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
- import com.qualcomm.robotcore.hardware.ColorSensor;
+ import com.qualcomm.robotcore.hardware.CRServo;
+ import com.qualcomm.robotcore.hardware.CRServoImplEx;
  import com.qualcomm.robotcore.hardware.DcMotor;
+ import com.qualcomm.robotcore.hardware.DcMotorEx;
  import com.qualcomm.robotcore.hardware.IMU;
- import com.qualcomm.robotcore.hardware.TouchSensor;
  import com.qualcomm.robotcore.util.ElapsedTime;
 
  import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
- import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
- import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
  import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
  import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
  import org.firstinspires.ftc.robotcore.internal.system.Deadline;
 
  import java.util.concurrent.TimeUnit;
+
 
  public abstract class AutoLinearAbstract2023 extends LinearOpMode {
 
@@ -76,19 +66,20 @@
      // OBJECTS
      MecanumDrive1
              driveTrain;
-    // DcMotorEx armMotor=null;
-     //DcMotorEx liftMotor = null;
-     //CRServo flapper=null;
+    DcMotorEx armMotor=null;
+     DcMotorEx liftMotor = null;
+     CRServo flapper=null;
 
 
      //declares timers that we use
      ElapsedTime
              generalTimer = new ElapsedTime(), // General/multipurpose timer
              autoTimer = new ElapsedTime();
+   // IMU imu;
      // Autonomous timer
-     final double ARM_TICKS_PER_DEGREE =
+    /* final double ARM_TICKS_PER_DEGREE =
              28 *(250047.0/4913.0)*(100.0/20.0)*1/360.0;
-     // ARM_TICKS_PER_DEGREE is 19.794
+     ARM_TICKS_PER_DEGREE is 19.794
       double ARM_COLLAPSED_INTO_ROBOT = 0;
       double ARM_COLLECT = 0 * ARM_TICKS_PER_DEGREE;
       double ARM_CLEAR_BARRIER = 15 * ARM_TICKS_PER_DEGREE;
@@ -96,8 +87,8 @@
       double ARM_SCORE_SAMPLE_IN_LOW= 50.933 * ARM_TICKS_PER_DEGREE;
       double ARM_SCORE_SAMPLE_IN_HIGH=101.867 * ARM_TICKS_PER_DEGREE;
       double ARM_ATTACH_HANGING_HOOK = 110 * ARM_TICKS_PER_DEGREE;
-      double ARM_WINCH_ROBOT = 10 * ARM_TICKS_PER_DEGREE;
-     IMU imu;
+      double ARM_WINCH_ROBOT = 10 * ARM_TICKS_PER_DEGREE;*/
+
 
      //True-false variables
      boolean
@@ -122,7 +113,7 @@
      final double
              MAX_DRIVE_TRAIN_POSITION_ERROR_INCHES = .25,
              DRIVE_TRAIN_STRAIGHT_SPEED = 0.5,
-             DRIVE_TRAIN_DEFAULT_SPEED = 0.5,
+             DRIVE_TRAIN_DEFAULT_SPEED = 0.35,
              HEADING_THRESHOLD       = 0.25,
              P_TURN_GAIN            = 0.1;     // Larger is more responsive, but also less stable
 
@@ -143,16 +134,16 @@
       * ------------------------------------------------------- */
      @Override
      public void runOpMode() {
-       /*  armMotor=hardwareMap.get(DcMotorEx.class,)
-        // liftMotor = hardwareMap.get(DcMotorEx.class, "liftMotor");
-        // flapper = hardwareMap.get(CRServoImplEx.class, "flapper");
+         armMotor=hardwareMap.get(DcMotorEx.class,"armMotor");
+        liftMotor = hardwareMap.get(DcMotorEx.class, "liftMotor");
+         flapper = hardwareMap.get(CRServoImplEx.class, "flapper");
          liftMotor.setDirection(DcMotor.Direction.REVERSE);
          liftMotor.setPower(0);
          liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
          liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
          liftMotor.setPower(0.7);
          liftMotor.setTargetPosition(0);
-         flapper.setPower(0);*/
+         flapper.setPower(0);
 
 
          safeStop = false; //Used for stopping robot
@@ -160,28 +151,15 @@
 
         /* Drive Train constructor: hardwareMap, left motor name, left motor direction, right motor name, right motor direction,
                                     encoder counts per output shaft revolution, gear ratio, wheel radius */
-         driveTrain = new MecanumDrive1(hardwareMap, "frontLeft",REVERSE, "frontRight", FORWARD, "rearLeft", REVERSE, "rearRight", FORWARD, 538, 1, 2.0);
+         driveTrain = new MecanumDrive1(hardwareMap, "frontLeft",REVERSE, "frontRight", REVERSE, "rearLeft", FORWARD, "rearRight", FORWARD, 538, 1, 2.0);
 
         /* Target-Motor constructor: hardwareMap, motor name, motor direction,
                               encoder counts per output shaft revolution, gear ratio, wheel radius */
-
-
-
-
+        //imu
          //imu
-         imu = hardwareMap.get(IMU.class, "imu");
-         double xRotation = 90;  // enter the desired X rotation angle here.
-         double yRotation = -90;  // enter the desired Y rotation angle here.
-         double zRotation = 0;  // enter the desired Z rotation angle here.
-         Orientation hubRotation = xyzOrientation(xRotation, yRotation, zRotation);
-         RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(hubRotation);
-         imu.initialize(new IMU.Parameters(orientationOnRobot));
 
-         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-         orientation.getRoll(AngleUnit.DEGREES);
+         //rateLimit.expire();
 
-
-         rateLimit.expire();
 
 
          // Notify drive station that robot objects are being initialized
@@ -200,15 +178,11 @@
          driveTrain.rear.motorLeft.goToAbsoluteDistance(driveTrain.rear.motorLeft.getPosition(), DRIVE_TRAIN_DEFAULT_SPEED);
          driveTrain.rear.motorRight.goToAbsoluteDistance(driveTrain.rear.motorRight.getPosition(), DRIVE_TRAIN_DEFAULT_SPEED);
 
-
-
-
-
-         imu.resetYaw();
-
-
-
-
+         /* INITIALIZE ROBOT - SIGNAL INITIALIZATION COMPLETE */
+         // Report initialization complete
+         telemetry.addLine("Initialization Complete");
+         telemetry.addLine("Hold for Start");
+         telemetry.update();
 
 
 
@@ -298,62 +272,7 @@
          return eStop;
      }
 
-     public void turnToHeading(double heading) {
-         int count = 0;
-         // Run getSteeringCorrection() once to pre-calculate the current error
-         getSteeringCorrection(heading);
 
-         // keep looping while we are still active, and not on heading.
-         while (opModeIsActive() && (Math.abs(headingError) > HEADING_THRESHOLD)) {
-
-             // Determine required steering to keep on heading
-             turnTarget = getSteeringCorrection(heading);
-
-             count += 1;
-             // Pivot in place by applying the turning correction
-             driveTrain.turnCwToTarget (turnTarget, .9);
-             while (!driveTrain.isMoveDone(0.25)){
-                 telemetry.addData(">", "Robot Heading = %4.0f", getRawHeading());
-                 telemetry.addData("count",count);
-                 telemetry.update();
-                 if(autoTimer.seconds() > 28)
-                     break;
-             }
-             if(autoTimer.seconds() > 28)
-                 break;
-         }
-
-         // Stop all motion;
-
-     }
-
-     public double getSteeringCorrection(double desiredHeading) {
-         targetHeading = desiredHeading;  // Save for telemetry
-
-         // Get the robot heading by applying an offset to the IMU heading
-         robotHeading = getRawHeading() - headingOffset;
-
-         // Determine the heading current error
-         headingError = targetHeading - robotHeading;
-
-         // Normalize the error to be within +/- 180 degrees
-         while (headingError > 180)  headingError -= 360;
-         while (headingError <= -180) headingError += 360;
-
-         // Determine the required steering correction
-         return(headingError);
-     }
-
-     public double getRawHeading() {
-         YawPitchRollAngles orientation = imu.getRobotYawPitchRollAngles();
-         return -1*orientation.getYaw(AngleUnit.DEGREES);
-     }
-
-     public void resetHeading() {
-         // Save a new heading offset equal to the current raw heading.
-         headingOffset = getRawHeading();
-         robotHeading = 0;
-     }
 
 
  }

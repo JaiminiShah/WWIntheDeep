@@ -1,7 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -33,14 +32,6 @@ public class WW_AutoBR2024 extends AutoLinearAbstract2023 {
 
 
         driveTrain.goStraightToTarget(24.5, DRIVE_TRAIN_DEFAULT_SPEED);
-        while (!driveTrain.isMoveDone(MAX_DRIVE_TRAIN_POSITION_ERROR_INCHES)) {
-            telemetry.addLine("Going to place pixel on spike");
-            if (Kill(28)) {
-                break;
-            }
-        }
-        turnToHeading(-90);
-        driveTrain.goStraightToTarget(6, DRIVE_TRAIN_DEFAULT_SPEED);
         while (!driveTrain.isMoveDone(MAX_DRIVE_TRAIN_POSITION_ERROR_INCHES)) {
             telemetry.addLine("Going to place pixel on spike");
             if (Kill(28)) {

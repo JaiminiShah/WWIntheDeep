@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
@@ -7,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
@@ -18,10 +20,16 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 @TeleOp(name="WW_Teleop2025", group="WiredWoodmen")
 public class WW_Teleop2025 extends OpMode {
     DcMotorEx
+            rearLeft = null,
+            rearRight = null,
+            frontLeft = null,
+            frontRight = null,
             liftMotor = null,
            armMotor=null;
     // ServoImplEx intake1;
     CRServoImplEx flapper;
+    double speedVariable = .7;
+    int speedVariable1=0;
     final double ARM_TICKS_PER_DEGREE =
             28 *(250047.0/4913.0)*(100.0/20.0)*1/360.0;
     final double liftIncrement=23.0;
@@ -54,49 +62,78 @@ public class WW_Teleop2025 extends OpMode {
 
     @Override
     public void init() {
+        rearLeft = hardwareMap.get(DcMotorEx.class, "rearLeft");
+
+        rearRight = hardwareMap.get(DcMotorEx.class, "rearRight");
+        frontLeft = hardwareMap.get(DcMotorEx.class, "frontLeft");
+        frontRight = hardwareMap.get(DcMotorEx.class, "frontRight");
         liftMotor = hardwareMap.get(DcMotorEx.class, "liftMotor");
-        armMotor=hardwareMap.get(DcMotorEx.class,"armMotor");
+        armMotor = hardwareMap.get(DcMotorEx.class, "armMotor");
         /* Define and initialize servos.*/
         flapper = hardwareMap.get(CRServoImplEx.class, "flapper");
         //Direction?
+        frontLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontRight.setDirection(DcMotor.Direction.REVERSE);
+        rearLeft.setDirection(DcMotor.Direction.FORWARD);
+        rearRight.setDirection(DcMotor.Direction.FORWARD);
         armMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         liftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
         liftMotor.setPower(0);
         armMotor.setPower(0);
+        frontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rearLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rearRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         liftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         //Setting motors to run without encoders
+        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rearLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rearRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         liftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         armMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         /*This sets the maximum current that the control hub will apply to the arm before throwing a flag */
-        ((DcMotorEx) armMotor).setCurrentAlert(5, CurrentUnit.AMPS);
+        // ((DcMotorEx) armMotor).setCurrentAlert(5, CurrentUnit.AMPS);
         /* Before starting the armMotor. We'll make sure the TargetPosition is set to 0.
         Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
         If you do not have the encoder plugged into this motor, it will not run in this code. */
         armMotor.setTargetPosition(0);
-       // armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        // armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armMotor.setPower(0);
         liftMotor.setTargetPosition(0);
-       // liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        // liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        frontLeft.setPower(0);
+        frontRight.setPower(0);
+        rearLeft.setPower(0);
+        rearRight.setPower(0);
         liftMotor.setPower(0);
         flapper.setPower(0.0);
         // intake1.setPosition(INTAKE_OFF);
-        telemetry=new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         //this will send a telemetry message to signify robot waiting;
         telemetry.addLine("AUTOBOTS ROLL OUT");
+        telemetryarm();
         telemetrylift();
 
         telemetry.update();
         runTime.reset();
-
-
     }
+        @Override
+        public void init_loop() {
+            telemetryarm();
+            telemetrylift();
+
+        }
+
+
     @Override
     public void start() {
-        armMotor.setTargetPosition((int)GROUND_POS);
+        armMotor.setTargetPosition((int)ARM_CLEAR_BARRIER);
+        ((DcMotorEx) armMotor).setVelocity(300);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotor.setVelocity(400);
         liftMotor.setTargetPosition(0);
         // liftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         liftMotor.setPower(0.0);
@@ -127,8 +164,8 @@ public class WW_Teleop2025 extends OpMode {
         double ff=Math.cos(Math.toRadians(target/ticks_in_degree))*f;
 
         // PID output
-        double output=pTerm+iTerm+dTerm;
-       // double output = pTerm + iTerm + dTerm +ff ;
+       // double output=pTerm+iTerm+dTerm;
+        double output = pTerm + iTerm + dTerm +ff ;
         //double output1=pTerm+iTerm+dTerm;
 
         // Update last error and reset timer for next iteration
@@ -141,6 +178,41 @@ public class WW_Teleop2025 extends OpMode {
 
     @Override
     public void loop() {
+        IMU imu = hardwareMap.get(IMU.class, "imu");
+        // Adjust the orientation parameters to match your robot
+        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));
+        // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
+        imu.initialize(parameters);
+
+        // This button choice was made so that it is hard to hit on accident,
+        // it can be freely changed based on preference.
+        // The equivalent button is start on Xbox-style controllers.
+        if (gamepad1.options) {
+            imu.resetYaw();
+        }
+
+
+
+
+        float FLspeed = -gamepad1.left_stick_y + gamepad1.left_stick_x;
+        float BLspeed = -gamepad1.left_stick_y - gamepad1.left_stick_x;
+        float FRspeed = -gamepad1.right_stick_y - gamepad1.right_stick_x;
+        float BRspeed = -gamepad1.right_stick_y + gamepad1.right_stick_x;
+
+        rearLeft.setPower(Range.clip((-BLspeed * speedVariable), -1, 1));
+        rearRight.setPower(Range.clip((BRspeed * speedVariable), -1, 1));
+        frontLeft.setPower(Range.clip((FLspeed * speedVariable), -1, 1));
+        frontRight.setPower(Range.clip((-FRspeed * speedVariable), -1, 1));
+
+
+        //DriveTrain Speed Controls
+        if (gamepad1.dpad_left) speedVariable -= 0.1;
+        if (gamepad1.dpad_right) speedVariable += 0.1;
+
+
+        speedVariable = Range.clip(speedVariable, 0, 1);
         /* Program for slides to raise up and down */
         if (gamepad2.right_bumper  && liftPosition>0) {
             liftPosition -= liftposincrement;
@@ -233,6 +305,27 @@ public class WW_Teleop2025 extends OpMode {
 
 
     }
+    public void telemetrymotorprint(){
+        telemetry.clear();
+        telemetry.addData("Drive Train Speed: " , speedVariable);
+        telemetry.addData("BRMotor2", "Position : %2d, Power : %.2f", rearRight.getCurrentPosition(), rearRight.getPower());
+        telemetry.addData("FRMotor2", "Position : %2d, Power : %.2f", frontRight.getCurrentPosition(), frontRight.getPower());
+
+        telemetry.addData("FLMotor2", "Position : %2d, Power : %.2f", frontLeft.getCurrentPosition(), frontLeft.getPower());
+        telemetry.addData("BLMotor2", "Position : %2d, Power : %.2f", rearLeft.getCurrentPosition(), rearLeft.getPower());
+
+        telemetry.addLine("left joystick | ")
+                .addData("x", gamepad1.left_stick_x)
+                .addData("y", gamepad1.left_stick_y);
+        telemetry.addLine("right joystick | ")
+                .addData("x", gamepad1.right_stick_x)
+                .addData("y", gamepad1.right_stick_y);
+
+        // this will send a telemetry message to signify robot waiting
+        telemetry.addLine("I 'm Ready");
+        telemetry.update();
+
+    }
     public void telemetrylift(){
         telemetry.addData("lift variable", liftPosition);
         telemetry.addData("Lift Target Position",liftMotor.getTargetPosition());
@@ -247,6 +340,21 @@ public class WW_Teleop2025 extends OpMode {
         telemetry.addData("arm Encoder: ", armMotor.getCurrentPosition());
         telemetry.addData("Lift motor velocity",armMotor.getVelocity());
         telemetry.addData("Arm Motor current",armMotor.getCurrent(CurrentUnit.AMPS));
+    }
+    //Code will run ONCE after the driver hits STOP
+    @Override
+    public void stop() {
+        // Sets all motors to zero power except Arms to keep pos
+        frontLeft.setPower(0);
+        rearLeft.setPower(0);
+        frontRight.setPower(0);
+        rearRight.setPower(0);
+        armMotor.setTargetPosition((int)ARM_CLEAR_BARRIER);
+        armMotor.setVelocity(200);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor.setPower(0);
+        flapper.setPower(0);
+
     }
 
 }
