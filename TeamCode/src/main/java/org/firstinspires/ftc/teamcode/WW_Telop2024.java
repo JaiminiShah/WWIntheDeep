@@ -267,6 +267,7 @@ public class WW_Telop2024 extends OpMode {
         if(gamepad2.left_bumper && liftPosition<2300){
             liftPosition+=liftposincrement;
         }
+
         /*here we check to see if the lift is trying to go higher than the maximum extension.
          *if it is, we set the variable to the max.
          */
